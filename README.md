@@ -83,15 +83,34 @@ These need a browser or your credentials, so they are not scripted.
    > **Custom**, add `cdn.playwright.dev` and `playwright.download.prss.microsoft.com`, and
    > tick _Also include default list of common package managers_.
 
-4. **Add an API trigger** to that routine → **Generate token**. The token is shown once.
-   Copy it along with the routine ID (`trig_...`).
+4. **Add an API trigger.** The token only exists once the routine is saved, since it is
+   scoped to that routine's ID, so this is a separate pass over the form:
 
-5. **Store them:**
+   <https://claude.ai/code/routines> → click the routine → **pencil icon** (_Edit routine_) →
+   scroll to **Select a trigger** below the Instructions box → **Add another trigger** →
+   **API**.
+
+   The modal that opens holds both values you need. Click **Generate token** and copy it
+   immediately — it is shown once and cannot be retrieved later; if you lose it, return to
+   the same modal and **Regenerate**. The routine ID is the middle segment of the endpoint
+   URL shown next to it:
+
+   ```
+   https://api.anthropic.com/v1/claude_code/routines/trig_01ABC.../fire
+                                                     ^^^^^^^^^^^ the routine ID
+   ```
+
+5. **Store them.** `CLAUDE_ROUTINE_ID` is only the `trig_...` segment, not the whole URL —
+   the workflow builds the endpoint around it:
 
    ```bash
-   gh variable set CLAUDE_ROUTINE_ID --body "trig_..."
+   gh variable set CLAUDE_ROUTINE_ID --body "trig_01ABC..."
    gh secret set CLAUDE_ROUTINE_TOKEN --body "sk-ant-oat01-..."
    ```
+
+   The token is a bearer token scoped to firing this one routine — it cannot read your
+   account or trigger anything else. It goes in a _secret_ rather than a variable so it stays
+   out of workflow logs.
 
 6. **Create the labels:**
 
