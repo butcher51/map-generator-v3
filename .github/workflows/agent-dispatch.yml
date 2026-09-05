@@ -1,0 +1,114 @@
+# Hands a labelled issue to a Claude Code cloud session.
+#
+# Routines' native GitHub triggers cover pull_request and release events but not
+# issues, so this workflow bridges the gap: it POSTs to the routine's /fire
+# endpoint and posts the resulting session URL back onto the issue, which is
+# what you click to watch and steer the agent from a browser or your phone.
+#
+# Requires (see README):
+#   vars.CLAUDE_ROUTINE_ID       the routine's ID (trig_...)
+#   secrets.CLAUDE_ROUTINE_TOKEN that routine's bearer token
+#
+# To re-run an agent on an issue, swap agent:running back to agent:ready.
+name: Agent dispatch
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  fire:
+    if: github.event.label.name == 'agent:ready'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - name: Check configuration
+        env:
+          ROUTINE_ID: ${{ vars.CLAUDE_ROUTINE_ID }}
+          ROUTINE_TOKEN: ${{ secrets.CLAUDE_ROUTINE_TOKEN }}
+        run: |
+          if [ -z "$ROUTINE_ID" ] || [ -z "$ROUTINE_TOKEN" ]; then
+            echo "::error::CLAUDE_ROUTINE_ID variable or CLAUDE_ROUTINE_TOKEN secret is not set. See README."
+            exit 1
+          fi
+
+      # The issue body is attacker-controllable on a public repo, so it is
+      # passed through the environment and encoded by jq rather than
+      # interpolated into a shell command. Anthropic wraps the text in a
+      # <routine-fire-payload> block and treats it as untrusted data, so the
+      # routine's own prompt decides what to do with it.
+      - name: Build payload
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          jq -n \
+            --arg repo "$REPO" \
+            --arg number "$ISSUE_NUMBER" \
+            --arg title "$ISSUE_TITLE" \
+            --arg body "$ISSUE_BODY" \
+            '{text: "Repository: \($repo)\nGitHub issue #\($number): \($title)\n\n\($body)"}' \
+            > payload.json
+
+      - name: Start cloud session
+        id: fire
+        env:
+          ROUTINE_ID: ${{ vars.CLAUDE_ROUTINE_ID }}
+          ROUTINE_TOKEN: ${{ secrets.CLAUDE_ROUTINE_TOKEN }}
+        run: |
+          status=$(curl -sS -o response.json -w '%{http_code}' -X POST \
+            "https://api.anthropic.com/v1/claude_code/routines/${ROUTINE_ID}/fire" \
+            -H "Authorization: Bearer ${ROUTINE_TOKEN}" \
+            -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "Content-Type: application/json" \
+            --data @payload.json)
+
+          if [ "$status" != "200" ]; then
+            echo "::error::Routine fire returned HTTP $status"
+            jq -r '.error.message // .' response.json || cat response.json
+            exit 1
+          fi
+
+          url=$(jq -r '.claude_code_session_url // empty' response.json)
+          if [ -z "$url" ]; then
+            echo "::error::Routine fired but returned no session URL"
+            cat response.json
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Announce the session on the issue
+        env:
+          SESSION_URL: ${{ steps.fire.outputs.url }}
+        run: |
+          cat > comment.md <<EOF
+          🤖 Agent session started: $SESSION_URL
+
+          Open it to watch progress, steer, or answer a question the agent asks.
+          It pushes a \`claude/*\` branch and opens a PR that closes this issue.
+          EOF
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file comment.md
+          gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
+            --add-label agent:running --remove-label agent:ready
+
+      - name: Flag the issue when dispatch fails
+        if: failure()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          cat > failure.md <<EOF
+          ⚠️ Could not start an agent session — see the [workflow run]($RUN_URL).
+
+          Re-apply the \`agent:ready\` label to retry.
+          EOF
+          gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
+            --add-label agent:blocked --remove-label agent:ready || true
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file failure.md || true

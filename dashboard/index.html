@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Pipeline — Map Generator v3</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f6f8;
+        --fg: #16191d;
+        --panel: #ffffff;
+        --border: #d8dce2;
+        --muted: #61697a;
+        --ok: #1a7f37;
+        --fail: #cf222e;
+        --pending: #9a6700;
+        --accent: #6b46c1;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14171a;
+          --fg: #e8eaed;
+          --panel: #1d2126;
+          --border: #333941;
+          --muted: #9aa3b2;
+          --ok: #3fb950;
+          --fail: #f85149;
+          --pending: #d29922;
+          --accent: #b392f0;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 1.25rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          14px/1.45 system-ui,
+          -apple-system,
+          Segoe UI,
+          sans-serif;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: baseline;
+        margin-bottom: 1rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      a {
+        color: inherit;
+      }
+      #status {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+      #status.error {
+        color: var(--fail);
+      }
+      #token {
+        margin-left: auto;
+        font: inherit;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.6rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--panel);
+        color: inherit;
+        cursor: pointer;
+      }
+      #board {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(210px, 1fr));
+        gap: 0.75rem;
+        overflow-x: auto;
+      }
+      @media (max-width: 900px) {
+        #board {
+          grid-template-columns: repeat(5, 78vw);
+        }
+      }
+      .column {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.6rem;
+        min-height: 6rem;
+      }
+      .column h2 {
+        display: flex;
+        justify-content: space-between;
+        margin: 0 0 0.6rem;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .count {
+        color: var(--fg);
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.5rem 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+      .card-title {
+        display: block;
+        font-weight: 600;
+        text-decoration: none;
+        margin-bottom: 0.35rem;
+      }
+      .card-title:hover {
+        text-decoration: underline;
+      }
+      .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      .tag,
+      .badge {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 0.05rem 0.45rem;
+      }
+      .tag-blocked {
+        color: var(--fail);
+        border-color: var(--fail);
+      }
+      .badge-success {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .badge-failure {
+        color: var(--fail);
+        border-color: var(--fail);
+      }
+      .badge-pending {
+        color: var(--pending);
+        border-color: var(--pending);
+      }
+      .session {
+        display: inline-block;
+        margin-top: 0.45rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .session::before {
+        content: '▶ ';
+      }
+      .session:hover {
+        text-decoration: underline;
+      }
+      .empty {
+        margin: 0;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Pipeline</h1>
+      <a id="repo" href="https://github.com" target="_blank" rel="noopener">repo</a>
+      <span id="status">Loading…</span>
+      <button type="button" id="token">API token</button>
+    </header>
+
+    <main id="board"></main>
+
+    <script type="module" src="dashboard.js"></script>
+  </body>
+</html>

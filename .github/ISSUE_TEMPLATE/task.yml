@@ -1,0 +1,18 @@
+name: Task
+description: Maintenance, tooling, refactoring or docs.
+labels: ['task']
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: What needs doing?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Context an agent could not infer from the code.
+  - type: markdown
+    attributes:
+      value: 'Add the **agent:ready** label when this is ready to be picked up.'

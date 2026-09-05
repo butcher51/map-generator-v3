@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Map Generator v3</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f8fa;
+        --fg: #16191d;
+        --panel: #ffffff;
+        --border: #d8dce2;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14171a;
+          --fg: #e8eaed;
+          --panel: #1d2126;
+          --border: #333941;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 1.5rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          15px/1.5 system-ui,
+          -apple-system,
+          Segoe UI,
+          sans-serif;
+      }
+      h1 {
+        margin: 0 0 1rem;
+        font-size: 1.25rem;
+      }
+      #controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      input,
+      button {
+        font: inherit;
+        padding: 0.4rem 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--panel);
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      canvas {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        image-rendering: pixelated;
+        background: var(--panel);
+      }
+      #legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 1rem;
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0 0;
+        font-size: 0.85rem;
+      }
+      #legend li {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .swatch {
+        width: 0.85rem;
+        height: 0.85rem;
+        border-radius: 3px;
+        border: 1px solid var(--border);
+      }
+      footer {
+        margin-top: 1.5rem;
+        font-size: 0.85rem;
+        opacity: 0.75;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Map Generator v3</h1>
+
+    <form id="controls">
+      <label for="seed">Seed</label>
+      <input id="seed" name="seed" type="text" autocomplete="off" />
+      <button type="submit">Generate</button>
+      <button type="button" id="random">Random</button>
+    </form>
+
+    <canvas
+      id="map"
+      width="768"
+      height="512"
+      role="img"
+      aria-label="Generated terrain map"
+    ></canvas>
+    <ul id="legend"></ul>
+
+    <footer>Same seed, same map. <a href="dashboard/">Pipeline dashboard</a></footer>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

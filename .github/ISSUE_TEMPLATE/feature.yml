@@ -1,0 +1,31 @@
+name: Feature
+description: Something new the map generator or dashboard should do.
+labels: ['feature']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An agent may implement this. Be specific about the outcome — vague issues
+        come back as questions instead of pull requests.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What should be true when this is done?
+      placeholder: The map view has a legend listing each terrain and how many cells it covers.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details and constraints
+      description: Anything that narrows the solution — where it lives, what it must not change.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: How will we know it works?
+      placeholder: |
+        - A unit test covers the counting logic
+        - The legend appears below the canvas and updates on reseed
+  - type: markdown
+    attributes:
+      value: 'Add the **agent:ready** label when this is ready to be picked up.'
