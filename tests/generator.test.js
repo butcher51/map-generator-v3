@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { BANDS, TERRAINS } from '../src/bands.js';
 import {
-  TERRAINS,
   classify,
   generateHeightmap,
   generateMap,
@@ -68,6 +68,14 @@ describe('classify', () => {
     expect(classify(-5)).toBe('water');
     expect(classify(5)).toBe('snow');
     expect(classify(Number.NaN)).toBe('water');
+  });
+
+  it('follows the configured bands', () => {
+    for (const band of BANDS) {
+      const inside = Number.isFinite(band.max) ? band.max - 1e-6 : 1;
+      expect(classify(inside)).toBe(band.terrain);
+      if (Number.isFinite(band.max)) expect(classify(band.max)).not.toBe(band.terrain);
+    }
   });
 
   it('only ever returns a known terrain', () => {
