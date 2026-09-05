@@ -12,8 +12,8 @@ const randomButton = document.querySelector('#random');
 const ctx = canvas.getContext('2d');
 
 function draw(seed) {
-  const map = generateMap({ width: 96, height: 64, seed });
-  renderMap(ctx, map, { cellSize: 8 });
+  const map = generateMap({ width: 500, height: 500, seed });
+  renderMap(ctx, map, { cellSize: 1 });
   legend.replaceChildren(buildLegend(document, terrainHistogram(map)));
   canvas.dataset.rendered = 'true';
   canvas.dataset.seed = String(seed);
