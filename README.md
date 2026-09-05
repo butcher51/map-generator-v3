@@ -50,7 +50,16 @@ These need a browser or your credentials, so they are not scripted.
 2. **Install the Claude GitHub App** on this repository:
    <https://github.com/apps/claude>
 
-3. **Create the agent routine** at <https://claude.ai/code/routines> → **New routine**:
+3. **Create the agent routine** at <https://claude.ai/code/routines> → **New routine**.
+
+   > **It must be a Cloud routine, not a Local one.** The Desktop app offers both, and a
+   > Local routine is a desktop scheduled task: it runs on your machine, only while it is
+   > awake, is schedule-only, and has no API or GitHub trigger — so nothing can fire it from
+   > a GitHub Action. If you see a **folder** picker rather than a **repository** picker, or
+   > the wording "Local routines only run while your computer is awake and online", you are
+   > on the Local form. Creating the routine on the web avoids the choice entirely.
+
+   Fill it in as:
 
    - **Name:** `Implement issue`
    - **Description:** _Turns a GitHub issue labelled agent:ready into a reviewed pull
