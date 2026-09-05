@@ -11,7 +11,7 @@ export default defineConfig({
       // Only the pure modules are held to a coverage floor. Canvas and DOM
       // wiring is covered by the Playwright smoke test instead, and a
       // threshold over untestable code only encourages fake tests.
-      include: ['src/generator.js', 'dashboard/lib.js'],
+      include: ['src/generator.js', 'src/viewport.js', 'dashboard/lib.js'],
       thresholds: {
         statements: 90,
         branches: 85,

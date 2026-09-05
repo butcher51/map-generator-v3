@@ -56,6 +56,109 @@ test.describe('map generator', () => {
     await page.click('#random');
     await expect(page.locator('#map')).not.toHaveAttribute('data-seed', 'coast');
   });
+
+  test('the canvas fills the viewport and the legend floats over it', async ({ page }) => {
+    await page.goto('/index.html?seed=coast');
+    const viewport = page.viewportSize();
+
+    const canvasBox = await page.locator('#map').boundingBox();
+    expect(canvasBox).toMatchObject({ x: 0, y: 0 });
+    expect(canvasBox.width).toBe(viewport.width);
+    expect(canvasBox.height).toBe(viewport.height);
+
+    // The legend sits inside the canvas area, near the bottom, not below it.
+    const legendBox = await page.locator('#legend').boundingBox();
+    expect(legendBox.y).toBeGreaterThan(viewport.height / 2);
+    expect(legendBox.y + legendBox.height).toBeLessThanOrEqual(viewport.height);
+
+    // No scrolling: nothing is pushed outside the window.
+    const scrollable = await page.evaluate(
+      () =>
+        document.documentElement.scrollHeight > window.innerHeight ||
+        document.documentElement.scrollWidth > window.innerWidth,
+    );
+    expect(scrollable).toBe(false);
+  });
+
+  test('the zoom buttons zoom in and back out to fit', async ({ page }) => {
+    const errors = watchForErrors(page);
+    await page.goto('/index.html?seed=coast');
+
+    const canvas = page.locator('#map');
+    // A freshly generated map is fitted, so zooming out is already exhausted.
+    await expect(canvas).toHaveAttribute('data-zoom', '100');
+    await expect(page.locator('#zoom-out')).toBeDisabled();
+
+    const fitted = await canvas.evaluate((el) => el.toDataURL());
+
+    await page.click('#zoom-in');
+    await expect(canvas).not.toHaveAttribute('data-zoom', '100');
+    await expect(page.locator('#zoom-level')).toContainText('125%');
+    await expect(page.locator('#zoom-out')).toBeEnabled();
+    expect(await canvas.evaluate((el) => el.toDataURL())).not.toBe(fitted);
+
+    // Zooming never re-generates: the seed is untouched.
+    await expect(canvas).toHaveAttribute('data-seed', 'coast');
+
+    await page.click('#zoom-out');
+    await expect(canvas).toHaveAttribute('data-zoom', '100');
+    expect(await canvas.evaluate((el) => el.toDataURL())).toBe(fitted);
+    expect(errors).toEqual([]);
+  });
+
+  test('the mouse wheel zooms', async ({ page }) => {
+    await page.goto('/index.html?seed=coast');
+    const canvas = page.locator('#map');
+    const viewport = page.viewportSize();
+
+    await page.mouse.move(viewport.width / 2, viewport.height / 2);
+    await page.mouse.wheel(0, -400);
+    await expect(canvas).not.toHaveAttribute('data-zoom', '100');
+
+    await page.mouse.wheel(0, 4000);
+    await expect(canvas).toHaveAttribute('data-zoom', '100');
+  });
+
+  test('right-drag pans a zoomed-in map and stops at the edge', async ({ page }) => {
+    await page.goto('/index.html?seed=coast');
+    const canvas = page.locator('#map');
+    const viewport = page.viewportSize();
+    const midX = viewport.width / 2;
+    const midY = viewport.height / 2;
+
+    // Zoom in until the map overflows both axes, so a drag has somewhere to go.
+    for (let i = 0; i < 4; i += 1) await page.click('#zoom-in');
+    const before = await canvas.getAttribute('data-pan');
+
+    await page.mouse.move(midX, midY);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(midX - 120, midY - 90);
+    await page.mouse.up({ button: 'right' });
+
+    const after = await canvas.getAttribute('data-pan');
+    expect(after).not.toBe(before);
+
+    // Dragging far past the corner clamps instead of exposing empty space.
+    await page.mouse.move(midX, midY);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(midX + 5000, midY + 5000);
+    await page.mouse.up({ button: 'right' });
+    await expect(canvas).toHaveAttribute('data-pan', '0,0');
+  });
+
+  test('a fitted map cannot be panned', async ({ page }) => {
+    await page.goto('/index.html?seed=coast');
+    const canvas = page.locator('#map');
+    const viewport = page.viewportSize();
+    const fitted = await canvas.evaluate((el) => el.toDataURL());
+
+    await page.mouse.move(viewport.width / 2, viewport.height / 2);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(viewport.width / 2 - 200, viewport.height / 2);
+    await page.mouse.up({ button: 'right' });
+
+    expect(await canvas.evaluate((el) => el.toDataURL())).toBe(fitted);
+  });
 });
 
 test.describe('pipeline dashboard', () => {

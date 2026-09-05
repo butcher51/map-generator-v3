@@ -11,6 +11,7 @@
         --bg: #f7f8fa;
         --fg: #16191d;
         --panel: #ffffff;
+        --glass: rgba(255, 255, 255, 0.86);
         --border: #d8dce2;
       }
       @media (prefers-color-scheme: dark) {
@@ -18,38 +19,104 @@
           --bg: #14171a;
           --fg: #e8eaed;
           --panel: #1d2126;
+          --glass: rgba(29, 33, 38, 0.86);
           --border: #333941;
         }
       }
       * {
         box-sizing: border-box;
       }
+      html,
+      body {
+        height: 100%;
+      }
       body {
         margin: 0;
-        padding: 1.5rem;
+        overflow: hidden;
         background: var(--bg);
         color: var(--fg);
         font:
-          15px/1.5 system-ui,
+          14px/1.4 system-ui,
           -apple-system,
           Segoe UI,
           sans-serif;
       }
-      h1 {
-        margin: 0 0 1rem;
-        font-size: 1.25rem;
+
+      /* The canvas owns the whole viewport; every control floats above it. */
+      #map {
+        position: fixed;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: var(--panel);
+        touch-action: none;
+      }
+      #map[data-pannable='true'] {
+        cursor: grab;
+      }
+      #map[data-panning='true'] {
+        cursor: grabbing;
+      }
+
+      .bar {
+        position: fixed;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1px solid var(--border);
+        background: var(--glass);
+        backdrop-filter: blur(8px);
+      }
+
+      #topbar {
+        top: 0;
+        left: 0;
+        right: 0;
+        border-width: 0 0 1px;
+        padding: 0.4rem 0.6rem;
+        flex-wrap: wrap;
       }
       #controls {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
         align-items: center;
-        margin-bottom: 1rem;
+        gap: 0.4rem;
       }
+      #controls label {
+        opacity: 0.75;
+      }
+      #seed {
+        width: 11rem;
+      }
+      #topbar a {
+        margin-left: auto;
+        color: inherit;
+        opacity: 0.75;
+      }
+      #zoom {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      #zoom-level {
+        min-width: 3.5rem;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        opacity: 0.75;
+      }
+      .icon {
+        width: 1.9rem;
+        padding: 0.25rem 0;
+        text-align: center;
+        font-size: 1rem;
+        line-height: 1;
+      }
+
       input,
       button {
         font: inherit;
-        padding: 0.4rem 0.7rem;
+        padding: 0.25rem 0.55rem;
         border: 1px solid var(--border);
         border-radius: 6px;
         background: var(--panel);
@@ -58,51 +125,42 @@
       button {
         cursor: pointer;
       }
-      canvas {
-        max-width: 100%;
-        height: auto;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        image-rendering: pixelated;
-        background: var(--panel);
+      button:disabled {
+        cursor: default;
+        opacity: 0.45;
       }
+
       #legend {
-        display: flex;
+        /* left/right 0 plus auto margins so the box can use the full width
+           before it wraps, while still sitting centred at the bottom. */
+        left: 0;
+        right: 0;
+        bottom: 0.75rem;
+        width: fit-content;
+        max-width: calc(100% - 1.5rem);
+        margin: 0 auto;
         flex-wrap: wrap;
-        gap: 0.25rem 1rem;
+        justify-content: center;
+        gap: 0.2rem 0.9rem;
         list-style: none;
-        padding: 0;
-        margin: 1rem 0 0;
-        font-size: 0.85rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
       }
       #legend li {
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.35rem;
       }
       .swatch {
-        width: 0.85rem;
-        height: 0.85rem;
+        width: 0.8rem;
+        height: 0.8rem;
         border-radius: 3px;
         border: 1px solid var(--border);
-      }
-      footer {
-        margin-top: 1.5rem;
-        font-size: 0.85rem;
-        opacity: 0.75;
       }
     </style>
   </head>
   <body>
-    <h1>Map Generator v3</h1>
-
-    <form id="controls">
-      <label for="seed">Seed</label>
-      <input id="seed" name="seed" type="text" autocomplete="off" />
-      <button type="submit">Generate</button>
-      <button type="button" id="random">Random</button>
-    </form>
-
     <canvas
       id="map"
       width="500"
@@ -110,9 +168,29 @@
       role="img"
       aria-label="Generated terrain map"
     ></canvas>
-    <ul id="legend"></ul>
 
-    <footer>Same seed, same map. <a href="dashboard/">Pipeline dashboard</a></footer>
+    <header id="topbar" class="bar">
+      <form id="controls">
+        <label for="seed">Seed</label>
+        <input id="seed" name="seed" type="text" autocomplete="off" />
+        <button type="submit">Generate</button>
+        <button type="button" id="random">Random</button>
+      </form>
+
+      <a href="dashboard/">Pipeline dashboard</a>
+
+      <div id="zoom">
+        <button type="button" id="zoom-out" class="icon" title="Zoom out" aria-label="Zoom out">
+          &minus;
+        </button>
+        <span id="zoom-level" aria-live="polite">100%</span>
+        <button type="button" id="zoom-in" class="icon" title="Zoom in" aria-label="Zoom in">
+          +
+        </button>
+      </div>
+    </header>
+
+    <ul id="legend" class="bar"></ul>
 
     <script type="module" src="src/main.js"></script>
   </body>
