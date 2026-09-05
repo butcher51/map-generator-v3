@@ -6,18 +6,7 @@
  * and what lets the UI share a map by sharing its seed.
  */
 
-/** Terrain names, ordered from lowest elevation to highest. */
-export const TERRAINS = ['water', 'sand', 'grass', 'forest', 'rock', 'snow'];
-
-/** Upper bound of each terrain band, in normalised height. */
-const BANDS = [
-  { max: 0.3, terrain: 'water' },
-  { max: 0.38, terrain: 'sand' },
-  { max: 0.55, terrain: 'grass' },
-  { max: 0.7, terrain: 'forest' },
-  { max: 0.85, terrain: 'rock' },
-  { max: Infinity, terrain: 'snow' },
-];
+import { BANDS, TERRAINS } from './bands.js';
 
 /**
  * Turn any seed value into a 32-bit integer. Numbers are truncated; anything
@@ -54,7 +43,7 @@ export function classify(height) {
   for (const band of BANDS) {
     if (h < band.max) return band.terrain;
   }
-  return 'snow';
+  return BANDS[BANDS.length - 1].terrain;
 }
 
 /**

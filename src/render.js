@@ -3,17 +3,7 @@
  * generation logic stays free of browser APIs and testable in Node.
  */
 
-import { TERRAINS } from './generator.js';
-
-/** Fill colour per terrain. */
-export const TERRAIN_COLORS = {
-  water: '#2b6cb0',
-  sand: '#ddc48c',
-  grass: '#5f9e4f',
-  forest: '#2f6b3a',
-  rock: '#8d8d8d',
-  snow: '#eef2f6',
-};
+import { TERRAINS, colorFor } from './bands.js';
 
 /**
  * Paint a map onto a 2D canvas context, sizing the canvas to fit.
@@ -29,7 +19,7 @@ export function renderMap(ctx, map, { cellSize = 8 } = {}) {
 
   for (let y = 0; y < map.height; y += 1) {
     for (let x = 0; x < map.width; x += 1) {
-      ctx.fillStyle = TERRAIN_COLORS[map.terrain[y * map.width + x]] ?? '#ff00ff';
+      ctx.fillStyle = colorFor(map.terrain[y * map.width + x]);
       ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
     }
   }
@@ -68,7 +58,7 @@ export function buildLegend(document, histogram) {
     const item = document.createElement('li');
     const swatch = document.createElement('span');
     swatch.className = 'swatch';
-    swatch.style.background = TERRAIN_COLORS[terrain];
+    swatch.style.background = colorFor(terrain);
     item.append(swatch, `${terrain} (${histogram[terrain] ?? 0})`);
     fragment.append(item);
   }
