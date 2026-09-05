@@ -1,0 +1,6 @@
+# Keep LF in the repository and in the working tree on every platform.
+# Without this, a Windows checkout gets CRLF and `prettier --check` fails
+# locally while CI (which checks out LF on Linux) stays green.
+* text=auto eol=lf
+
+*.png binary
