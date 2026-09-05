@@ -36,6 +36,29 @@ export function renderMap(ctx, map, { cellSize = 8 } = {}) {
 }
 
 /**
+ * Blit an already-painted map onto the visible canvas under a zoom/pan view.
+ *
+ * The map is rendered once at one pixel per cell into an off-screen canvas;
+ * this only scales and offsets that buffer, so zooming never re-generates.
+ *
+ * @param {CanvasRenderingContext2D} ctx      context of the on-screen canvas
+ * @param {CanvasImageSource & {width:number,height:number}} source  map buffer
+ * @param {{scale:number,x:number,y:number}} view  in CSS pixels
+ * @param {{pixelRatio?:number}} [options]
+ */
+export function drawScene(ctx, source, view, { pixelRatio = 1 } = {}) {
+  const canvas = ctx.canvas;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!(view.scale > 0) || source.width === 0 || source.height === 0) return;
+
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  // Crisp cells: the map is pixel art, so never blur it when zoomed in.
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(source, view.x, view.y, source.width * view.scale, source.height * view.scale);
+}
+
+/**
  * Build the legend markup as DOM nodes. Returns a DocumentFragment so the
  * caller decides where it goes.
  */

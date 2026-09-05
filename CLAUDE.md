@@ -11,8 +11,8 @@ is a dev tool. If a task seems to need a library, say so in the PR instead of ad
 
 **Structure.** Keep logic pure and separate from the DOM:
 
-- `src/generator.js` and `dashboard/lib.js` are pure — no DOM, no `fetch`, no module state.
-  These are the modules under a coverage floor, so new logic belongs here.
+- `src/generator.js`, `src/viewport.js` and `dashboard/lib.js` are pure — no DOM, no `fetch`,
+  no module state. These are the modules under a coverage floor, so new logic belongs here.
 - `src/render.js`, `src/main.js` and `dashboard/dashboard.js` do canvas, DOM and I/O.
   These are covered by the Playwright smoke test rather than unit tests.
 
@@ -51,6 +51,7 @@ means a green PR.
 ```
 index.html            app shell
 src/generator.js      pure seeded generation (unit tested)
+src/viewport.js       pure zoom/pan maths (unit tested)
 src/render.js         canvas drawing
 src/main.js           DOM wiring
 dashboard/lib.js      pure pipeline logic (unit tested)
