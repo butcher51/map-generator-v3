@@ -14,7 +14,7 @@ import {
   zoomView,
 } from './viewport.js';
 
-const MAP_SIZE = 500;
+const MAP_SIZE = 1000;
 const RIGHT_BUTTON = 2;
 
 const canvas = document.querySelector('#map');
